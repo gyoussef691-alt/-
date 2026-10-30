@@ -1,0 +1,6 @@
+{
+  "name": "Ras Gharib Mobility — رأس غارب موبيليتي",
+  "description": "منصة النقل والمشاوير بين المدن وتوصيل الطرود في رأس غارب والبحر الأحمر",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

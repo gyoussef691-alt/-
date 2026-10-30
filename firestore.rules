@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny catch-all safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'gyoussef691@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Healthcheck document
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    // Admins registry
+    match /admins/{adminId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update: if isValidId(userId);
+      allow delete: if isAdmin();
+    }
+
+    // Drivers collection (public directory of registered/approved drivers)
+    match /drivers/{driverId} {
+      allow read: if true;
+      allow create: if isValidId(driverId);
+      // Drivers can update their vehicle details, but only admin can approve
+      allow update: if isValidId(driverId) && (
+        isAdmin() ||
+        !incoming().diff(existing()).affectedKeys().hasAny(['verificationStatus']) ||
+        incoming().verificationStatus != 'APPROVED'
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Ride Requests collection (public marketplace requests)
+    match /rideRequests/{requestId} {
+      allow read: if true;
+      allow create: if isValidId(requestId);
+      allow update: if isValidId(requestId);
+      allow delete: if isAdmin();
+    }
+
+    // Driver Offers collection (bids on requests)
+    match /driverOffers/{offerId} {
+      allow read: if true;
+      allow create: if isValidId(offerId);
+      allow update: if isValidId(offerId);
+      allow delete: if isAdmin();
+    }
+
+    // Published Trips (intercity schedules)
+    match /publishedTrips/{tripId} {
+      allow read: if true;
+      allow create: if isValidId(tripId);
+      allow update: if isValidId(tripId);
+      allow delete: if isAdmin();
+    }
+
+    // Bookings (seat reservations)
+    match /bookings/{bookingId} {
+      allow read: if true;
+      allow create: if isValidId(bookingId);
+      allow update: if isValidId(bookingId);
+      allow delete: if isAdmin();
+    }
+
+    // Parcels (package tracking)
+    match /parcels/{parcelId} {
+      allow read: if true;
+      allow create: if isValidId(parcelId);
+      allow update: if isValidId(parcelId);
+      allow delete: if isAdmin();
+    }
+
+    // Complaints & feedback
+    match /complaints/{complaintId} {
+      allow read: if true;
+      allow create: if isValidId(complaintId);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

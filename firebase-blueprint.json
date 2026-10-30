@@ -1,0 +1,220 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile in Ras Gharib Mobility platform",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "fullName": { "type": "string", "maxLength": 150 },
+        "email": { "type": "string", "maxLength": 200 },
+        "role": { "type": "string", "enum": ["PASSENGER", "DRIVER", "ADMIN"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED", "PENDING_VERIFICATION"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "phone", "fullName", "role", "status", "createdAt"]
+    },
+    "DriverProfile": {
+      "title": "Driver Profile",
+      "description": "Registered driver documentation and vehicle details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 150 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "nationalId": { "type": "string", "maxLength": 50 },
+        "licenseNumber": { "type": "string", "maxLength": 50 },
+        "vehicleModel": { "type": "string", "maxLength": 100 },
+        "vehiclePlate": { "type": "string", "maxLength": 50 },
+        "vehicleSeats": { "type": "number" },
+        "verificationStatus": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED", "NEEDS_REVISION"] },
+        "verificationNote": { "type": "string", "maxLength": 500 },
+        "rating": { "type": "number" },
+        "totalTripsCount": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "fullName", "phone", "verificationStatus", "createdAt"]
+    },
+    "RideRequest": {
+      "title": "Ride Request",
+      "description": "On-demand city or intercity ride request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "passengerId": { "type": "string", "maxLength": 128 },
+        "passengerName": { "type": "string", "maxLength": 150 },
+        "passengerPhone": { "type": "string", "maxLength": 30 },
+        "serviceType": { "type": "string", "enum": ["CITY", "INTERCITY"] },
+        "originCity": { "type": "string", "maxLength": 100 },
+        "originAddress": { "type": "string", "maxLength": 300 },
+        "destinationCity": { "type": "string", "maxLength": 100 },
+        "destinationAddress": { "type": "string", "maxLength": 300 },
+        "scheduledTime": { "type": "string" },
+        "passengerCount": { "type": "number" },
+        "suggestedFare": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 500 },
+        "originLat": { "type": "number" },
+        "originLng": { "type": "number" },
+        "destLat": { "type": "number" },
+        "destLng": { "type": "number" },
+        "routeDistanceKm": { "type": "number" },
+        "routeDurationMins": { "type": "number" },
+        "status": { "type": "string", "enum": ["OPEN", "OFFERED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED"] },
+        "acceptedOfferId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "passengerId", "passengerName", "passengerPhone", "serviceType", "originCity", "originAddress", "destinationCity", "destinationAddress", "scheduledTime", "passengerCount", "status", "createdAt"]
+    },
+    "DriverOffer": {
+      "title": "Driver Offer",
+      "description": "Driver fare bid for a specific ride request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "requestId": { "type": "string", "maxLength": 128 },
+        "driverId": { "type": "string", "maxLength": 128 },
+        "driverName": { "type": "string", "maxLength": 150 },
+        "driverPhone": { "type": "string", "maxLength": 30 },
+        "driverRating": { "type": "number" },
+        "vehicleModel": { "type": "string", "maxLength": 100 },
+        "vehiclePlate": { "type": "string", "maxLength": 50 },
+        "proposedFare": { "type": "number" },
+        "estimatedArrivalMins": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["PENDING", "ACCEPTED", "REJECTED", "EXPIRED"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "requestId", "driverId", "driverName", "proposedFare", "estimatedArrivalMins", "status", "createdAt"]
+    },
+    "PublishedTrip": {
+      "title": "Published Trip",
+      "description": "Scheduled trip published by an approved driver",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "driverId": { "type": "string", "maxLength": 128 },
+        "driverName": { "type": "string", "maxLength": 150 },
+        "driverPhone": { "type": "string", "maxLength": 30 },
+        "driverRating": { "type": "number" },
+        "vehicleModel": { "type": "string", "maxLength": 100 },
+        "vehiclePlate": { "type": "string", "maxLength": 50 },
+        "originCity": { "type": "string", "maxLength": 100 },
+        "originDetails": { "type": "string", "maxLength": 300 },
+        "destinationCity": { "type": "string", "maxLength": 100 },
+        "destinationDetails": { "type": "string", "maxLength": 300 },
+        "departureTime": { "type": "string" },
+        "totalSeats": { "type": "number" },
+        "availableSeats": { "type": "number" },
+        "bookedSeats": { "type": "number" },
+        "pricePerSeat": { "type": "number" },
+        "status": { "type": "string", "enum": ["SCHEDULED", "PENDING", "ACTIVE", "COMPLETED", "CANCELLED"] },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "driverId", "driverName", "originCity", "destinationCity", "departureTime", "totalSeats", "availableSeats", "bookedSeats", "pricePerSeat", "status", "createdAt"]
+    },
+    "Booking": {
+      "title": "Seat Booking",
+      "description": "Passenger reservation on a published trip",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tripId": { "type": "string", "maxLength": 128 },
+        "tripSummary": { "type": "string", "maxLength": 200 },
+        "passengerId": { "type": "string", "maxLength": 128 },
+        "passengerName": { "type": "string", "maxLength": 150 },
+        "passengerPhone": { "type": "string", "maxLength": 30 },
+        "seatsBooked": { "type": "number" },
+        "totalFare": { "type": "number" },
+        "commissionRate": { "type": "number" },
+        "commissionAmount": { "type": "number" },
+        "netDriverAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["CONFIRMED", "COMPLETED", "CANCELLED"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "tripId", "passengerId", "passengerName", "passengerPhone", "seatsBooked", "totalFare", "commissionRate", "commissionAmount", "netDriverAmount", "status", "createdAt"]
+    },
+    "Parcel": {
+      "title": "Parcel Delivery",
+      "description": "Package shipment between Red Sea cities",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "trackingNumber": { "type": "string", "maxLength": 50 },
+        "senderId": { "type": "string", "maxLength": 128 },
+        "senderName": { "type": "string", "maxLength": 150 },
+        "senderPhone": { "type": "string", "maxLength": 30 },
+        "receiverName": { "type": "string", "maxLength": 150 },
+        "receiverPhone": { "type": "string", "maxLength": 30 },
+        "originCity": { "type": "string", "maxLength": 100 },
+        "destinationCity": { "type": "string", "maxLength": 100 },
+        "pickupAddress": { "type": "string", "maxLength": 300 },
+        "deliveryAddress": { "type": "string", "maxLength": 300 },
+        "packageDescription": { "type": "string", "maxLength": 500 },
+        "weightKg": { "type": "number" },
+        "agreedPrice": { "type": "number" },
+        "commissionRate": { "type": "number" },
+        "commissionAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["CREATED", "ASSIGNED", "IN_TRANSIT", "DELIVERED", "CANCELLED"] },
+        "assignedDriverId": { "type": "string", "maxLength": 128 },
+        "assignedDriverName": { "type": "string", "maxLength": 150 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "trackingNumber", "senderId", "senderName", "senderPhone", "receiverName", "receiverPhone", "originCity", "destinationCity", "pickupAddress", "deliveryAddress", "packageDescription", "agreedPrice", "commissionRate", "commissionAmount", "status", "createdAt"]
+    },
+    "Complaint": {
+      "title": "Customer Complaint or Feedback",
+      "description": "Feedback or report submitted by users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 150 },
+        "userPhone": { "type": "string", "maxLength": 30 },
+        "relatedId": { "type": "string", "maxLength": 128 },
+        "category": { "type": "string", "maxLength": 100 },
+        "message": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["PENDING", "UNDER_REVIEW", "RESOLVED"] },
+        "adminReply": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "userName", "category", "message", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profile records with role and contact info"
+    },
+    "/drivers/{driverId}": {
+      "schema": { "$ref": "#/entities/DriverProfile" },
+      "description": "Driver vehicle and official verification records"
+    },
+    "/rideRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/RideRequest" },
+      "description": "On-demand ride requests created by passengers"
+    },
+    "/driverOffers/{offerId}": {
+      "schema": { "$ref": "#/entities/DriverOffer" },
+      "description": "Driver fare offers for ride requests"
+    },
+    "/publishedTrips/{tripId}": {
+      "schema": { "$ref": "#/entities/PublishedTrip" },
+      "description": "Intercity trips published by drivers"
+    },
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "Trip seat bookings"
+    },
+    "/parcels/{parcelId}": {
+      "schema": { "$ref": "#/entities/Parcel" },
+      "description": "Parcel delivery tracking records"
+    },
+    "/complaints/{complaintId}": {
+      "schema": { "$ref": "#/entities/Complaint" },
+      "description": "Support tickets and complaints"
+    }
+  }
+}

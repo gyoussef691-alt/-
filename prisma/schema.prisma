@@ -1,0 +1,312 @@
+// Prisma Schema for Ras Gharib Mobility — رأس غارب موبيليتي
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PASSENGER
+  DRIVER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum DriverVerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_REVISION
+}
+
+enum RideServiceType {
+  CITY         // داخل مدينة رأس غارب
+  INTERCITY    // بين المدن (الغردقة، قنا، القاهرة، السويس، إلخ)
+}
+
+enum RideRequestStatus {
+  OPEN         // معروض للسائقين
+  OFFERED      // وصلته عروض
+  ACCEPTED     // اختار الراكب عرضاً وثبّت الحجز
+  IN_PROGRESS  // جاري تنفيذ الرحلة
+  COMPLETED    // اكتملت الرحلة
+  CANCELLED    // ملغى
+}
+
+enum DriverOfferStatus {
+  PENDING      // في انتظار اختيار الراكب
+  ACCEPTED     // تم قبوله وتثبيت الحجز
+  REJECTED     // رفضه الراكب أو انتهت الصلاحية
+  EXPIRED      // منتهي الصلاحية
+}
+
+enum TripStatus {
+  SCHEDULED    // مجدولة ومتاحة للحجز
+  ACTIVE       // جارية الآن
+  COMPLETED    // مكتملة
+  CANCELLED    // ملغاة
+}
+
+enum BookingStatus {
+  CONFIRMED    // مؤكد
+  COMPLETED    // مكتمل
+  CANCELLED    // ملغى
+}
+
+enum ParcelStatus {
+  CREATED      // مسجل بانتظار سائق
+  ASSIGNED     // تم إسناده لسائق
+  IN_TRANSIT   // في الطريق للتسليم
+  DELIVERED    // تم التسليم للعميل
+  CANCELLED    // ملغى
+}
+
+enum ComplaintStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+}
+
+enum PaymentSettlementStatus {
+  CASH_UNPAID    // نقدي عند الوصول - لم تُسدد عمولة المنصة بعد
+  CASH_SETTLED   // تم توريد وتسوية عمولة المنصة
+}
+
+model User {
+  id            String      @id @default(uuid())
+  phone         String      @unique // رقم الهاتف المصري بتنسيق +20
+  email         String?     @unique
+  passwordHash  String?
+  fullName      String
+  role          UserRole    @default(PASSENGER)
+  status        UserStatus  @default(ACTIVE)
+  avatarUrl     String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  driverProfile DriverProfile?
+  rideRequests  RideRequest[]
+  bookings      Booking[]
+  sentParcels   Parcel[]        @relation("SenderParcels")
+  complaints    Complaint[]
+  auditLogs     AuditLog[]
+
+  @@index([phone])
+  @@index([role])
+}
+
+model DriverProfile {
+  id                 String                   @id @default(uuid())
+  userId             String                   @unique
+  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nationalId         String                   @unique // الرقم القومي
+  nationalIdCardUrl  String?                  // صورة البطاقة
+  licenseNumber      String                   // رقم رخصة القيادة
+  licenseCardUrl     String?                  // صورة الرخصة
+  vehicleModel       String                   // نوع وموديل المركبة (مثال: تويوتا هايس 2022)
+  vehiclePlate       String                   // رقم اللوحة المعدنية
+  vehicleColor       String?
+  vehicleSeats       Int                      @default(4)
+  verificationStatus DriverVerificationStatus @default(PENDING)
+  verificationNote   String?
+  rating             Decimal                  @default(5.00) @db.Decimal(3, 2)
+  totalTripsCount    Int                      @default(0)
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+
+  publishedTrips     PublishedTrip[]
+  offers             DriverOffer[]
+  assignedParcels    Parcel[]                 @relation("DriverParcels")
+
+  @@index([verificationStatus])
+}
+
+model RideRequest {
+  id                 String             @id @default(uuid())
+  passengerId        String
+  passenger          User               @relation(fields: [passengerId], references: [id])
+  serviceType        RideServiceType
+  originCity         String             @default("رأس غارب")
+  originAddress      String             // عنوان أو نقطة التحرك
+  destinationCity    String             // الوجهة (الغردقة، قنا، القاهرة، أو داخل غارب)
+  destinationAddress String
+  scheduledTime      DateTime
+  passengerCount     Int                @default(1)
+  suggestedFare      Decimal?           @db.Decimal(10, 2)
+  notes              String?
+  status             RideRequestStatus  @default(OPEN)
+  acceptedOfferId    String?            @unique
+  acceptedOffer      DriverOffer?       @relation("AcceptedOffer", fields: [acceptedOfferId], references: [id])
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  offers             DriverOffer[]      @relation("RequestOffers")
+  commissionRecord   CommissionLedger?
+
+  @@index([status])
+  @@index([passengerId])
+  @@index([originCity, destinationCity])
+}
+
+model DriverOffer {
+  id                     String             @id @default(uuid())
+  requestId              String
+  request                RideRequest        @relation("RequestOffers", fields: [requestId], references: [id], onDelete: Cascade)
+  driverId               String
+  driver                 DriverProfile      @relation(fields: [driverId], references: [id])
+  proposedFare           Decimal            @db.Decimal(10, 2) // السعر المقترح بالجنيه
+  estimatedArrivalMins   Int                @default(15)       // وقت الوصول التقديري بالدقائق
+  notes                  String?
+  status                 DriverOfferStatus  @default(PENDING)
+  validUntil             DateTime?
+  createdAt              DateTime           @default(now())
+
+  acceptedByRequest      RideRequest?       @relation("AcceptedOffer")
+
+  @@index([requestId])
+  @@index([driverId])
+}
+
+model PublishedTrip {
+  id                 String        @id @default(uuid())
+  driverId           String
+  driver             DriverProfile @relation(fields: [driverId], references: [id])
+  originCity         String        @default("رأس غارب")
+  originDetails      String
+  destinationCity    String
+  destinationDetails String
+  departureTime      DateTime
+  totalSeats         Int
+  availableSeats     Int           // يتم إنقاصها ذرياً عند الحجز لمنع تجاوز السعة
+  pricePerSeat       Decimal       @db.Decimal(10, 2)
+  status             TripStatus    @default(SCHEDULED)
+  notes              String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  bookings           Booking[]
+
+  @@index([originCity, destinationCity])
+  @@index([departureTime])
+  @@index([status])
+}
+
+model Booking {
+  id                String           @id @default(uuid())
+  tripId            String
+  trip              PublishedTrip    @relation(fields: [tripId], references: [id])
+  passengerId       String
+  passenger         User             @relation(fields: [passengerId], references: [id])
+  seatsBooked       Int              @default(1)
+  totalFare         Decimal          @db.Decimal(10, 2)
+  // يتم تجميد نسبة العمولة وقت الحجز لضمان النزاهة المحاسبية
+  commissionRate    Decimal          @db.Decimal(5, 2) // مثال 10.00%
+  commissionAmount  Decimal          @db.Decimal(10, 2) // حصة المنصة
+  netDriverAmount   Decimal          @db.Decimal(10, 2) // حصة السائق
+  status            BookingStatus    @default(CONFIRMED)
+  cancellationReason String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  commissionRecord  CommissionLedger?
+
+  @@index([tripId])
+  @@index([passengerId])
+  @@index([status])
+}
+
+model Parcel {
+  id                 String           @id @default(uuid())
+  senderId           String
+  sender             User             @relation("SenderParcels", fields: [senderId], references: [id])
+  assignedDriverId   String?
+  assignedDriver     DriverProfile?   @relation("DriverParcels", fields: [assignedDriverId], references: [id])
+  senderName         String
+  senderPhone        String
+  receiverName       String
+  receiverPhone      String
+  originCity         String           @default("رأس غارب")
+  destinationCity    String
+  pickupAddress      String
+  deliveryAddress    String
+  packageDescription String
+  weightKg           Decimal?         @db.Decimal(5, 2)
+  agreedPrice        Decimal          @db.Decimal(10, 2)
+  commissionRate     Decimal          @default(10.00) @db.Decimal(5, 2)
+  commissionAmount   Decimal          @db.Decimal(10, 2)
+  status             ParcelStatus     @default(CREATED)
+  trackingNumber     String           @unique
+  deliveryNotes      String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  commissionRecord   CommissionLedger?
+
+  @@index([trackingNumber])
+  @@index([status])
+}
+
+model Complaint {
+  id          String          @id @default(uuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  relatedId   String?         // رقم الرحلة أو الحجز أو الطرد
+  category    String          // تأخير، سلوك سائق، سعر غير مطابق، مفقودات
+  message     String
+  status      ComplaintStatus @default(PENDING)
+  adminReply  String?
+  createdAt   DateTime        @default(now())
+  resolvedAt  DateTime?
+
+  @@index([status])
+}
+
+model CommissionLedger {
+  id              String                  @id @default(uuid())
+  bookingId       String?                 @unique
+  booking         Booking?                @relation(fields: [bookingId], references: [id])
+  requestId       String?                 @unique
+  request         RideRequest?            @relation(fields: [requestId], references: [id])
+  parcelId        String?                 @unique
+  parcel          Parcel?                 @relation(fields: [parcelId], references: [id])
+  totalAmount     Decimal                 @db.Decimal(10, 2)
+  commissionRate  Decimal                 @db.Decimal(5, 2)
+  commissionAmount Decimal                @db.Decimal(10, 2)
+  driverAmount    Decimal                 @db.Decimal(10, 2)
+  settlementStatus PaymentSettlementStatus @default(CASH_UNPAID)
+  createdAt       DateTime                @default(now())
+
+  @@index([settlementStatus])
+}
+
+model SystemSettings {
+  key         String   @id
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  action       String   // APPROVE_DRIVER, REJECT_DRIVER, UPDATE_COMMISSION, CANCEL_TRIP
+  targetEntity String
+  targetId     String
+  details      String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  @@index([action])
+  @@index([createdAt])
+}

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="gradBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B1F3A" />
+      <stop offset="100%" stop-color="#146EF5" />
+    </linearGradient>
+    <linearGradient id="roadGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#18B981" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded squircle with safe padding -->
+  <rect width="512" height="512" rx="112" fill="url(#gradBg)" />
+
+  <!-- Subtle grid/coastal wave lines -->
+  <path d="M 0 380 Q 128 350, 256 380 T 512 380 L 512 512 L 0 512 Z" fill="#0B1F3A" opacity="0.35" />
+
+  <!-- Road / Highway Pin Accent -->
+  <path d="M 120 410 L 220 180 L 292 180 L 392 410 Z" fill="#0B1F3A" opacity="0.4" />
+  <line x1="256" y1="210" x2="256" y2="400" stroke="#FFFFFF" stroke-width="8" stroke-dasharray="24 16" stroke-linecap="round" />
+
+  <!-- Modern Vehicle Symbol -->
+  <g transform="translate(156, 170)">
+    <!-- Car body -->
+    <path d="M 20 110 L 40 50 Q 55 20, 100 20 L 100 20 Q 145 20, 160 50 L 180 110 Q 195 125, 195 150 L 195 170 Q 195 180, 185 180 L 175 180 Q 165 180, 165 170 L 165 160 L 35 160 L 35 170 Q 35 180, 25 180 L 15 180 Q 5 180, 5 170 L 5 150 Q 5 125, 20 110 Z" fill="#FFFFFF" />
+    
+    <!-- Windshield -->
+    <path d="M 46 100 L 60 55 Q 70 38, 100 38 Q 130 38, 140 55 L 154 100 Z" fill="#0B1F3A" />
+    
+    <!-- Headlights -->
+    <ellipse cx="32" cy="130" rx="14" ry="9" fill="#18B981" />
+    <ellipse cx="168" cy="130" rx="14" ry="9" fill="#18B981" />
+    
+    <!-- Center Grille Badge -->
+    <rect x="85" y="124" width="30" height="12" rx="4" fill="#146EF5" />
+  </g>
+
+  <!-- Location Pin & Beacon at Top -->
+  <g transform="translate(256, 110)">
+    <circle cx="0" cy="0" r="28" fill="#18B981" />
+    <circle cx="0" cy="0" r="14" fill="#FFFFFF" />
+  </g>
+</svg>
